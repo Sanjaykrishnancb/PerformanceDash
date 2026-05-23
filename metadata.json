@@ -1,0 +1,8 @@
+{
+  "name": "Member Performance Dashboard",
+  "description": "A sports science and coaching platform for capturing and visualizing daily performance, biofeedback, and lifestyle metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

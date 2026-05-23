@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      // NOTE: Using email_verified is recommended but Google Sign in provides it directly.
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+    
+    function isValidId(id) {
+       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function checkType(field, type) {
+       return (type == 'string' && field is string && field.size() <= 1000) ||
+              (type == 'number' && (field is int || field is float)) ||
+              (type == 'boolean' && field is bool) ||
+              (type == 'timestamp' && field is timestamp);
+    }
+
+    function isValidCheckIn(data) {
+       return data.keys().hasAll(['date', 'userId']) &&
+              checkType(data.date, 'string') &&
+              data.userId == request.auth.uid &&
+              data.keys().hasOnly(['date', 'weight', 'rhr', 'bloodGlucose', 'waterIntake', 'caffeine', 'strengthSession', 'sessionIntensity', 'cardioPerformed', 'stepCount', 'morningReadiness', 'energyLevels', 'hunger', 'stress', 'sickness', 'digestionNotes', 'nutritionAdherence', 'bedtime', 'wakeUpTime', 'sleepDuration', 'sleepQuality', 'userId', 'createdAt', 'updatedAt']) &&
+              ( !('weight' in data) || checkType(data.weight, 'number') ) &&
+              ( !('rhr' in data) || checkType(data.rhr, 'number') ) &&
+              ( !('bloodGlucose' in data) || checkType(data.bloodGlucose, 'number') ) &&
+              ( !('waterIntake' in data) || checkType(data.waterIntake, 'number') ) &&
+              ( !('caffeine' in data) || checkType(data.caffeine, 'number') ) &&
+              ( !('strengthSession' in data) || checkType(data.strengthSession, 'boolean') ) &&
+              ( !('sessionIntensity' in data) || checkType(data.sessionIntensity, 'number') ) &&
+              ( !('cardioPerformed' in data) || checkType(data.cardioPerformed, 'boolean') ) &&
+              ( !('stepCount' in data) || checkType(data.stepCount, 'number') ) &&
+              ( !('morningReadiness' in data) || checkType(data.morningReadiness, 'number') ) &&
+              ( !('energyLevels' in data) || checkType(data.energyLevels, 'number') ) &&
+              ( !('hunger' in data) || checkType(data.hunger, 'number') ) &&
+              ( !('stress' in data) || checkType(data.stress, 'number') ) &&
+              ( !('sickness' in data) || checkType(data.sickness, 'boolean') ) &&
+              ( !('digestionNotes' in data) || checkType(data.digestionNotes, 'string') ) &&
+              ( !('nutritionAdherence' in data) || checkType(data.nutritionAdherence, 'boolean') ) &&
+              ( !('bedtime' in data) || checkType(data.bedtime, 'string') ) &&
+              ( !('wakeUpTime' in data) || checkType(data.wakeUpTime, 'string') ) &&
+              ( !('sleepDuration' in data) || checkType(data.sleepDuration, 'number') ) &&
+              ( !('sleepQuality' in data) || checkType(data.sleepQuality, 'number') );
+    }
+
+    match /checkIns/{checkInId} {
+       allow get: if isSignedIn() && isValidId(checkInId) && existing().userId == request.auth.uid;
+       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+       
+       allow create: if isSignedIn() &&
+                        isValidId(checkInId) &&
+                        isValidCheckIn(incoming()) &&
+                        incoming().createdAt == request.time &&
+                        incoming().updatedAt == request.time;
+                        
+       allow update: if isSignedIn() &&
+                        isValidId(checkInId) &&
+                        existing().userId == request.auth.uid &&
+                        isValidCheckIn(incoming()) &&
+                        incoming().userId == existing().userId &&
+                        incoming().createdAt == existing().createdAt &&
+                        incoming().updatedAt == request.time &&
+                        (incoming().diff(existing()).affectedKeys().hasAny(['date', 'weight', 'rhr', 'bloodGlucose', 'waterIntake', 'caffeine', 'strengthSession', 'sessionIntensity', 'cardioPerformed', 'stepCount', 'morningReadiness', 'energyLevels', 'hunger', 'stress', 'sickness', 'digestionNotes', 'nutritionAdherence', 'bedtime', 'wakeUpTime', 'sleepDuration', 'sleepQuality', 'updatedAt']));
+                        
+       allow delete: if isSignedIn() && isValidId(checkInId) && existing().userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "CheckIn": {
+      "title": "CheckIn",
+      "description": "Daily tracking of member performance metrics.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "weight": { "type": "number" },
+        "rhr": { "type": "integer" },
+        "bloodGlucose": { "type": "integer" },
+        "waterIntake": { "type": "number" },
+        "caffeine": { "type": "integer" },
+        "strengthSession": { "type": "boolean" },
+        "sessionIntensity": { "type": "integer" },
+        "cardioPerformed": { "type": "boolean" },
+        "stepCount": { "type": "integer" },
+        "morningReadiness": { "type": "integer" },
+        "energyLevels": { "type": "integer" },
+        "hunger": { "type": "integer" },
+        "stress": { "type": "integer" },
+        "sickness": { "type": "boolean" },
+        "digestionNotes": { "type": "string" },
+        "nutritionAdherence": { "type": "boolean" },
+        "bedtime": { "type": "string" },
+        "wakeUpTime": { "type": "string" },
+        "sleepDuration": { "type": "number" },
+        "sleepQuality": { "type": "integer" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "timestamp" },
+        "updatedAt": { "type": "timestamp" }
+      },
+      "required": ["date", "userId"]
+    }
+  },
+  "firestore": {
+    "/checkIns/{checkInId}": {
+      "schema": { "$ref": "CheckIn" },
+      "description": "Daily check-in logs per user"
+    }
+  }
+}
