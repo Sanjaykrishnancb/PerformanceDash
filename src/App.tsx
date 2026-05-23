@@ -6,12 +6,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CheckInForm } from './components/CheckInForm';
 import { Dashboard } from './components/Dashboard';
+import { Planner } from './components/Planner';
+import { Nutrition } from './components/Nutrition';
+import { Supplements } from './components/Supplements';
+import { TrainingPlan } from './components/TrainingPlan';
 import { Login } from './components/Login';
 import { auth, db } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { CheckIn } from './types';
-import { ActivitySquare, LineChart, LogOut, CheckCircle2, Edit } from 'lucide-react';
+import { ActivitySquare, LineChart, LogOut, CheckCircle2, Edit, Calendar, Utensils, Pill, Dumbbell } from 'lucide-react';
 import { cn } from './utils';
 import { format } from 'date-fns';
 
@@ -66,7 +70,7 @@ export default function App() {
 }
 
 function AuthenticatedApp({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<'checkin' | 'dashboard'>('checkin');
+  const [activeTab, setActiveTab] = useState<'checkin' | 'dashboard' | 'planner' | 'nutrition' | 'supplements' | 'training'>('checkin');
   const [data, setData] = useState<CheckIn[]>([]);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -122,22 +126,38 @@ function AuthenticatedApp({ user }: { user: any }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 overflow-hidden">
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10 sticky top-0">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">
-              <ActivitySquare className="w-5 h-5" />
+      <header className="bg-white border-b border-slate-200 shrink-0 z-10 sticky top-0">
+        <div className="max-w-5xl mx-auto w-full">
+          <div className="h-16 flex items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center text-white font-bold shrink-0">
+                <ActivitySquare className="w-5 h-5" />
+              </div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-slate-800">
+                Performance<span className="text-indigo-600">Dash</span>
+              </h1>
             </div>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-800">
-              Performance<span className="text-indigo-600">Dash</span>
-            </h1>
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-semibold text-slate-900">{user.email}</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Athlete</p>
+              </div>
+              <button 
+                onClick={() => auth.signOut()}
+                className="text-slate-400 hover:text-rose-600 transition-colors p-2 -mr-2 sm:mr-0"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            <nav className="flex gap-4 text-sm font-medium text-slate-500">
+          
+          <div className="px-4 sm:px-6 overflow-x-auto no-scrollbar border-t border-slate-100 sm:border-t-0 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.05)] sm:shadow-none">
+            <nav className="flex gap-5 sm:gap-6 text-sm font-medium text-slate-500 min-w-max">
               <button
                 onClick={() => setActiveTab('checkin')}
                 className={cn(
-                  "pb-5 pt-5 transition-colors border-b-2 flex items-center gap-1.5",
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
                   activeTab === 'checkin' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
                 )}
               >
@@ -146,27 +166,54 @@ function AuthenticatedApp({ user }: { user: any }) {
               <button
                 onClick={() => setActiveTab('dashboard')}
                 className={cn(
-                  "pb-5 pt-5 transition-colors border-b-2 flex items-center gap-1.5",
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
                   activeTab === 'dashboard' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
                 )}
               >
                 <LineChart className="w-4 h-4 hidden sm:block" />
                 Dashboard
               </button>
-            </nav>
-            <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-semibold text-slate-900">{user.email}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Athlete</p>
-              </div>
-              <button 
-                onClick={() => auth.signOut()}
-                className="text-slate-400 hover:text-rose-600 transition-colors"
-                title="Sign out"
+              <button
+                onClick={() => setActiveTab('planner')}
+                className={cn(
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
+                  activeTab === 'planner' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
+                )}
               >
-                <LogOut className="w-5 h-5" />
+                <Calendar className="w-4 h-4 hidden sm:block" />
+                Planner
               </button>
-            </div>
+              <button
+                onClick={() => setActiveTab('nutrition')}
+                className={cn(
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
+                  activeTab === 'nutrition' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
+                )}
+              >
+                <Utensils className="w-4 h-4 hidden sm:block" />
+                Nutrition
+              </button>
+              <button
+                onClick={() => setActiveTab('supplements')}
+                className={cn(
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
+                  activeTab === 'supplements' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
+                )}
+              >
+                <Pill className="w-4 h-4 hidden sm:block" />
+                Supplements
+              </button>
+              <button
+                onClick={() => setActiveTab('training')}
+                className={cn(
+                  "py-4 sm:pb-5 sm:pt-0 transition-colors border-b-2 flex items-center gap-1.5",
+                  activeTab === 'training' ? "text-indigo-600 border-indigo-600" : "border-transparent hover:text-slate-800"
+                )}
+              >
+                <Dumbbell className="w-4 h-4 hidden sm:block" />
+                Training
+              </button>
+            </nav>
           </div>
         </div>
       </header>
@@ -213,6 +260,10 @@ function AuthenticatedApp({ user }: { user: any }) {
                 </div>
               )}
               {activeTab === 'dashboard' && <Dashboard data={data} />}
+              {activeTab === 'planner' && <Planner />}
+              {activeTab === 'nutrition' && <Nutrition />}
+              {activeTab === 'supplements' && <Supplements />}
+              {activeTab === 'training' && <TrainingPlan />}
             </>
           )}
         </div>
